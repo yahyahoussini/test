@@ -1,0 +1,31 @@
+{
+  "name": "cod-ecommerce-mvp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A production-ready COD-only e-commerce MVP for Morocco.",
+  "author": "Jules",
+  "license": "MIT",
+  "packageManager": "pnpm@8.6.0",
+  "scripts": {
+    "dev": "pnpm --parallel --stream dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "build": "pnpm --filter \"./**\" build",
+    "build:api": "pnpm --filter api build",
+    "build:web": "pnpm --filter web build",
+    "start": "pnpm --filter api start",
+    "lint": "pnpm --filter \"./**\" lint",
+    "test": "pnpm --filter api test && pnpm --filter web test",
+    "test:e2e": "pnpm --filter web test:e2e",
+    "db:migrate:dev": "pnpm --filter api migrate:dev",
+    "db:studio": "pnpm --filter api studio",
+    "seed": "pnpm --filter api seed",
+    "postinstall": "pnpm --filter \"./**\" install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------
+// ENUMS
+// -------------------
+
+enum OrderStatus {
+  NEW
+  VERIFYING
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RTO // Returned to Origin
+  NO_ANSWER
+}
+
+enum OrderSource {
+  WEB
+  WHATSAPP
+  MANUAL
+}
+
+// -------------------
+// MODELS
+// -------------------
+
+model Product {
+  id        String   @id @default(cuid())
+  sku       String   @unique
+  slug      String   @unique
+  active    Boolean  @default(true)
+  priceMAD  Float
+  stock     Int      @default(0)
+  images    String[]
+  i18n      Json // {"ar-MA": {...}, "fr-MA": {...}}
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  OrderItem OrderItem[]
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  shortId    String      @unique @default(cuid()) // Simplified, user-facing ID
+  items      Json // [{ productId, sku, name, price, qty, image }]
+  totals     Json // { subtotal, shipping, codFee, grandTotal }
+  customer   Json // { name, phone, city, address, notes }
+  status     OrderStatus @default(NEW)
+  source     OrderSource @default(WEB)
+  verification Json?     // { method: 'otp' | 'manual', otpAttemptCount, verifiedAt }
+  timeline   Json[]      // [{ status, timestamp, actor: 'system' | 'admin_id' }]
+  notes      String?     @db.Text
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  orderItems OrderItem[]
+}
+
+// This model helps with inventory management and reporting
+model OrderItem {
+  id         String   @id @default(cuid())
+  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    String
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  String
+  quantity   Int
+  priceAtTime Float
+
+  @@unique([orderId, productId])
+}
+
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  totpSecret   String?
+  roles        String[] @default(["operator"]) // e.g., ["operator", "admin"]
+  active       Boolean  @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ContentBlock {
+  id     String @id @default(cuid())
+  key    String // e.g., "homepage.hero", "homepage.usp"
+  locale String // "ar-MA" or "fr-MA"
+  content Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, locale])
+}
+
+// For storing shipping rules, etc.
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
