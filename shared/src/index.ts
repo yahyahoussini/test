@@ -1,16 +1,16 @@
 import { z } from 'zod';
 
-// --- General ---
+// --- General & i18n ---
 export const LocaleSchema = z.enum(['ar-MA', 'fr-MA']);
 export type Locale = z.infer<typeof LocaleSchema>;
 
-// --- Phone Number Validation ---
+// --- Phone Number Validation (as specified) ---
 const moroccanPhoneRegex = /^(0|\+212)[\s-]?[5-7]\d{8}$/;
 export const PhoneSchema = z.string().regex(moroccanPhoneRegex, {
-  message: "Invalid Moroccan phone number format.",
+  message: 'Numéro de téléphone marocain invalide.',
 });
 
-// --- Product ---
+// --- Product Schemas ---
 export const ProductI18nSchema = z.object({
   name: z.string().min(3),
   subtitle: z.string().optional(),
@@ -21,7 +21,7 @@ export const ProductI18nSchema = z.object({
 export type ProductI18n = z.infer<typeof ProductI18nSchema>;
 
 export const ProductSchema = z.object({
-  id: z.string(),
+  id: z.string().cuid(),
   sku: z.string(),
   slug: z.string(),
   active: z.boolean(),
@@ -35,41 +35,41 @@ export const ProductSchema = z.object({
 });
 export type Product = z.infer<typeof ProductSchema>;
 
-
-// --- Order ---
+// --- Order Schemas ---
 export const OrderStatusSchema = z.enum([
   'NEW', 'VERIFYING', 'CONFIRMED', 'PACKED', 'SHIPPED',
   'DELIVERED', 'CANCELLED', 'RTO', 'NO_ANSWER'
 ]);
 export type OrderStatus = z.infer<typeof OrderStatusSchema>;
 
-export const OrderSourceSchema = z.enum(['WEB', 'WHATSAPP', 'MANUAL']);
+export const OrderSourceSchema = z.enum(['WEB', 'WHATSAPP']);
 export type OrderSource = z.infer<typeof OrderSourceSchema>;
 
 export const CartItemSchema = z.object({
-  productId: z.string(),
+  productId: z.string().cuid(),
   qty: z.number().int().min(1),
 });
+export type CartItem = z.infer<typeof CartItemSchema>;
 
 export const CustomerInfoSchema = z.object({
-  name: z.string().min(2, "Name is required"),
+  name: z.string().min(2, 'Le nom est requis'),
   phone: PhoneSchema,
-  city: z.string().min(2, "City is required"),
-  address: z.string().min(5, "Address is required"),
+  city: z.string().min(2, 'La ville est requise'),
+  address: z.string().min(5, 'L\'adresse est requise'),
   notes: z.string().optional(),
 });
 
 export const CreateOrderSchema = z.object({
-  items: z.array(CartItemSchema).min(1),
+  items: z.array(CartItemSchema).min(1, 'Le panier est vide'),
   customer: CustomerInfoSchema,
   acceptPrivacy: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the privacy policy." }),
+    errorMap: () => ({ message: 'Vous devez accepter la politique de confidentialité.' }),
   }),
 });
 export type CreateOrderDto = z.infer<typeof CreateOrderSchema>;
 
 export const VerifyOtpSchema = z.object({
-  code: z.string().length(6, "OTP must be 6 digits"),
+  code: z.string().length(6, 'Le code OTP doit comporter 6 chiffres'),
 });
 export type VerifyOtpDto = z.infer<typeof VerifyOtpSchema>;
 
@@ -77,13 +77,7 @@ export const OrderResponseSchema = z.object({
     id: z.string(),
     shortId: z.string(),
     status: OrderStatusSchema,
-    totals: z.object({
-        subtotal: z.number(),
-        shipping: z.number(),
-        codFee: z.number(),
-        grandTotal: z.number(),
-        currency: z.literal('MAD'),
-    }),
+    totals: z.any(), // Not defining shape here to avoid duplication with backend logic
     nextAction: z.object({
         type: z.enum(['OTP_VERIFY', 'WAIT_CONFIRMATION', 'COMPLETE']),
         message: z.string(),
@@ -91,7 +85,7 @@ export const OrderResponseSchema = z.object({
 });
 export type OrderResponse = z.infer<typeof OrderResponseSchema>;
 
-// --- Admin ---
+// --- Admin & Auth Schemas ---
 export const AdminLoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -99,6 +93,11 @@ export const AdminLoginSchema = z.object({
 export type AdminLoginDto = z.infer<typeof AdminLoginSchema>;
 
 export const TotpVerifySchema = z.object({
-  token: z.string().length(6),
+  token: z.string().length(6, 'Le code doit comporter 6 chiffres'),
 });
 export type TotpVerifyDto = z.infer<typeof TotpVerifySchema>;
+
+export const UpdateOrderStatusSchema = z.object({
+    to: OrderStatusSchema
+});
+export type UpdateOrderStatusDto = z.infer<typeof UpdateOrderStatusSchema>;

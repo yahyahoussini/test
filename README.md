@@ -1,168 +1,113 @@
-# Bio Cosmetics E-Commerce MVP (COD-Only)
+# Production-Ready COD E-Commerce MVP (Morocco)
 
-This repository contains the full source code for a production-ready, Cash-on-Delivery (COD) only e-commerce MVP for a bio cosmetics brand in Morocco. It includes a Node.js API backend and a React frontend, built with a modern, robust tech stack.
-
-## Features
-
-- **Bilingual**: Supports Arabic (ar-MA, RTL) and French (fr-MA, LTR).
-- **COD Checkout**: A streamlined, single-page checkout process designed for Cash on Delivery.
-- **OTP Verification**: Phone number verification via OTP to confirm orders.
-- **Admin Panel**: A comprehensive back-office for managing orders, products, and content.
-- **SEO Optimized**: SSR-friendly, with JSON-LD schemas, and proper i18n meta tags.
-- **Performance-Focused**: Built with Vite, React, and TanStack Query for a fast user experience.
-- **Production-Ready**: Includes Dockerfile, Render configuration, and CI/CD setup for linting and testing.
+This repository contains the full source code for a production-ready, Cash-on-Delivery (COD) only e-commerce MVP for a bio-cosmetics brand in Morocco. It includes a Node.js API backend and a React frontend, built with a modern, robust tech stack as per the specification.
 
 ## Tech Stack
 
-- **Monorepo**: pnpm workspaces
-- **Frontend**: Vite, React, TypeScript, Tailwind CSS, shadcn/ui, TanStack Router, TanStack Query, i18next
-- **Backend**: Node.js, Express, TypeScript, Prisma, PostgreSQL, Redis, Zod
-- **Authentication**: JWT for admin, TOTP for 2FA
-- **Storage**: S3-compatible object storage for images (e.g., Cloudflare R2, MinIO)
+- **Monorepo**: npm workspaces
+- **Backend**: Node.js, Express, TypeScript, Prisma, PostgreSQL, ioredis
+- **Frontend**: Vite, React 18.3, TypeScript 5, Tailwind CSS, shadcn/ui
 - **Testing**: Playwright for E2E tests
-- **Linting/Formatting**: ESLint, Prettier
-
-## Project Structure
-
-```
-/
-├── api/             # Backend Express.js app
-├── web/             # Frontend Vite + React app
-├── shared/          # Shared types and validation schemas (Zod)
-├── .env.example     # Environment variable template
-├── package.json     # Root package manager with workspace scripts
-└── README.md
-```
+- **Deployment**: Docker, Render, Vercel
 
 ## Prerequisites
 
-- Node.js (v18 or later)
-- pnpm (v8 or later)
-- Docker and Docker Compose (for local development)
+- Node.js v20 (use of `nvm` is recommended: `nvm use`)
+- npm v10+
+- Docker and Docker Compose (for local development infrastructure)
 
 ## Getting Started
 
-### 1. Clone the repository
+### 1. Environment Setup
 
-```bash
-git clone <repository-url>
-cd <repository-name>
-```
+First, ensure you are using Node.js v20. If you have `nvm` installed, simply run `nvm use` in the project root.
 
-### 2. Set up environment variables
-
-Copy the example environment file and fill in the required values.
+Copy the example environment file and fill in the required values for your local setup or production deployment.
 
 ```bash
 cp .env.example .env
 ```
 
-You will need credentials for a PostgreSQL database, Redis, and an S3-compatible storage bucket. For local development, you can use the provided `docker-compose.yml` which sets up Postgres and Redis automatically. The `.env` file is pre-configured to work with the Docker setup.
+The default `DATABASE_URL` and `REDIS_URL` are configured to work with the local Docker Compose setup.
 
-### 3. Install dependencies
+### 2. Install Dependencies
 
-This project uses `pnpm` workspaces. Install dependencies from the root directory.
+Install all dependencies for all workspaces from the root directory.
 
 ```bash
-pnpm install
+npm install
 ```
 
-### 4. Start Local Development Services
+### 3. Start Local Database & Redis
 
-Run the local PostgreSQL and Redis instances using Docker Compose.
+In a separate terminal, run the local PostgreSQL and Redis instances using Docker Compose.
 
 ```bash
 docker-compose up -d
 ```
 
-### 5. Run database migrations
+### 4. Run Database Migrations
 
-Apply the Prisma schema to your database. This will create all the necessary tables.
+Apply the Prisma schema to your database. This command, run from the root, will execute the migration script in the `api` workspace.
 
 ```bash
-pnpm --filter api run migrate:dev
+npx prisma migrate dev
 ```
+*(Note: Prisma CLI commands are best run with `npx` to ensure the correct version is used.)*
 
-### 6. Seed the database
+### 5. Seed the Database
 
 Populate the database with initial data (sample products, admin user, content blocks).
 
 ```bash
-pnpm seed
+npm run seed
 ```
 
 **Default Admin Credentials:**
 - **Email**: `admin@example.com`
-- **Password**: `password123`
+- **Password**: `Admin@12345`
+- **TOTP Setup**: A secret is pre-seeded. Use an authenticator app with this secret to generate codes for your first login. The secret will be logged to the console when seeding.
 
-You will be prompted to set up TOTP on your first login.
-
-### 7. Run the development servers
+### 6. Run the Development Servers
 
 This command will start both the backend API and the frontend web app concurrently.
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 - **API Server**: `http://localhost:4000`
 - **Web App**: `http://localhost:5173`
 
-You can now access the application in your browser.
+The application should now be running and accessible in your browser.
 
-## Scripts
+## Available Scripts
 
-The following scripts are available in the root `package.json`:
-
-- `pnpm dev`: Starts both API and web development servers.
-- `pnpm dev:api`: Starts only the API server.
-- `pnpm dev:web`: Starts only the web server.
-- `pnpm build`: Builds both apps for production.
-- `pnpm build:api`: Builds only the API.
-- `pnpm build:web`: Builds only the web app.
-- `pnpm start`: Starts the built production apps.
-- `pnpm lint`: Lints the entire codebase.
-- `pnpm test`: Runs all tests (including Playwright E2E tests).
-- `pnpm test:e2e`: Runs only the Playwright tests.
-- `pnpm seed`: Runs the database seed script.
-
-## Testing
-
-The project includes unit tests and Playwright E2E tests.
-
-To run all tests:
-```bash
-pnpm test
-```
-
-To run only the E2E tests:
-```bash
-# First, ensure the dev server is running
-pnpm dev &
-
-# Then, run the tests
-pnpm test:e2e
-```
+- `npm run dev`: Starts both API and web development servers.
+- `npm run build`: Builds both apps for production.
+- `npm run lint`: Lints the entire codebase.
+- `npm run format`: Formats the entire codebase with Prettier.
+- `npm run test`: Runs all tests (unit, integration, e2e).
+- `npm run seed`: Runs the database seed script.
+- `npm run migrate:dev`: Creates and applies a new database migration.
 
 ## Deployment
 
-### Backend API (Render)
+### Backend API + Database (Render)
 
 The `api/render.yaml` file provides a blueprint for deploying the backend, PostgreSQL, and Redis on Render.
 
-1.  Create a new "Blueprint" service on Render.
-2.  Connect your Git repository.
-3.  Render will automatically detect `render.yaml` and provision the services.
-4.  Set the required environment variables in the Render dashboard.
+1.  Create a new "Blueprint" service on Render and connect your Git repository.
+2.  Render will automatically detect `render.yaml` and provision the services.
+3.  Set the required environment variables in an `api-secrets` environment group in the Render dashboard as defined in `.env.example`.
 
-### Frontend (Vercel/Netlify)
+### Frontend (Vercel)
 
-1.  Create a new project on Vercel or Netlify.
-2.  Connect your Git repository.
-3.  Configure the project settings:
-    - **Build Command**: `pnpm --filter web build`
+1.  Create a new project on Vercel and connect your Git repository.
+2.  Configure the project settings:
+    - **Framework Preset**: `Vite`
+    - **Build Command**: `npm run build --workspace=web`
     - **Output Directory**: `web/dist`
-    - **Install Command**: `pnpm install`
-    - **Root Directory**: `/`
-4.  Set the environment variable `VITE_API_BASE_URL` to point to your deployed backend URL.
-5.  Deploy.
+    - **Install Command**: `npm install`
+3.  Set the `VITE_API_BASE_URL` environment variable to point to your deployed backend URL.
+4.  Deploy.

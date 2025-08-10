@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build_lint_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build all packages
+        run: npm run build
+
+      - name: Lint all packages
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+        env:
+          # E2E tests need a running app, but we run them against a mock server or stubbed API in CI
+          # For now, we'll just run the test command. A real CI setup would need more.
+          CI: true
+          # Set dummy env vars required by the app to boot
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+          REDIS_URL: "redis://localhost:6379"
+          JWT_SECRET: "ci-secret"

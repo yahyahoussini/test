@@ -3,53 +3,60 @@ services:
   - type: web
     name: api
     env: node
-    plan: free # Or your preferred plan
-    rootDir: api
-    buildCommand: "pnpm install && pnpm build"
-    startCommand: "pnpm start"
-    healthCheckPath: /health
+    plan: starter # 'free' plan may sleep, 'starter' is recommended for production
+    rootDir: .
+    buildFilter:
+      paths:
+      - api/**
+      - shared/**
+      - package.json
+      - package-lock.json
+    buildCommand: "npm install && npm run build --workspace=api"
+    startCommand: "npm run start:api"
+    healthCheckPath: /api/health
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: postgres
+          name: postgres-db
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
-          name: redis
+          name: redis-cache
           property: connectionString
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 4000
       - key: CORS_ORIGIN
-        value: https://your-frontend-domain.onrender.com # Change this to your frontend URL
+        sync: false # Set this in the Render dashboard to your frontend's URL
       - fromGroup: api-secrets
 
   # --- PostgreSQL Database ---
   - type: pserv
-    name: postgres
+    name: postgres-db
     env: postgres
-    plan: free # Or your preferred plan
+    plan: starter # 'free' plan has limitations
     postgresMajorVersion: 15
     disk:
       name: postgres-data
       sizeGB: 1
-      mountPath: /var/lib/postgresql/data
 
   # --- Redis Instance ---
   - type: redis
-    name: redis
-    plan: free # Or your preferred plan
-    ipAllowList: [] # Add your services' IPs here if needed
+    name: redis-cache
+    plan: starter # 'free' plan has limitations
+    ipAllowList: [] # Render automatically allows access from services in the same account
 
-# --- Environment Variable Group ---
-# Store your secrets here in the Render dashboard
+# --- Environment Variable Group for Secrets ---
+# Create this group in your Render dashboard under "Environment"
 envVarGroups:
   - name: api-secrets
     envVars:
       - key: JWT_SECRET
         sync: false
       - key: TOTP_ISSUER
-        sync: false
+        value: TussnaAdmin
       - key: S3_ENDPOINT
         sync: false
       - key: S3_ACCESS_KEY_ID

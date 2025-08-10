@@ -12,8 +12,12 @@ if (process.env.NODE_ENV === 'development') {
 
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    // allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, server-to-server, or curl requests)
     if (!origin) return callback(null, true);
+
+    if (allowedOrigins.length === 0 || allowedOrigins.includes('*')) {
+        return callback(null, true);
+    }
 
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';

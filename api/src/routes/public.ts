@@ -1,27 +1,24 @@
 import { Router } from 'express';
 import { processRequestBody } from 'zod-express-middleware';
-import { prisma } from '../lib/prisma';
-import { CreateOrderSchema } from 'shared';
-import { sensitiveActionLimiter } from '../middleware/rateLimiter';
-import { createOrder, verifyOrderOtp } from '../services/orderService';
 import { getProductBySlug, getProducts } from '../services/productService';
+import { createOrder, verifyOrderOtp } from '../services/orderService';
+import { CreateOrderSchema, VerifyOtpSchema } from 'shared';
+import { sensitiveActionLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
 // --- Product Routes ---
-
-// GET /api/products -> list with pagination
+// GET /api/products -> List products with pagination, filtering, and search
 router.get('/products', async (req, res, next) => {
   try {
-    const query = req.query; // You can add Zod validation here for query params
-    const products = await getProducts(query);
-    res.json(products);
+    const result = await getProducts(req.query);
+    res.json(result);
   } catch (error) {
     next(error);
   }
 });
 
-// GET /api/products/:slug -> detail
+// GET /api/products/:slug -> Get a single product's details
 router.get('/products/:slug', async (req, res, next) => {
   try {
     const product = await getProductBySlug(req.params.slug);
@@ -36,8 +33,7 @@ router.get('/products/:slug', async (req, res, next) => {
 
 
 // --- Order Routes ---
-
-// POST /api/orders -> create NEW
+// POST /api/orders -> Create a new order
 router.post(
   '/orders',
   sensitiveActionLimiter,
@@ -48,7 +44,7 @@ router.post(
       const result = await createOrder(orderDto);
       res.status(201).json(result);
     } catch (error) {
-      if (error instanceof Error && error.message.includes('stock')) {
+      if (error instanceof Error && (error.message.includes('stock') || error.message.includes('not found'))) {
         return res.status(400).json({ message: error.message });
       }
       next(error);
@@ -56,30 +52,38 @@ router.post(
   }
 );
 
-// POST /api/orders/:id/verify-otp -> verify OTP
-router.post('/orders/:id/verify-otp', sensitiveActionLimiter, async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const { code } = req.body; // Add Zod validation for the code
-        if (!code || typeof code !== 'string' || code.length !== 6) {
-            return res.status(400).json({ message: 'Invalid OTP format.' });
+// POST /api/orders/:id/verify-otp -> Verify an order's OTP to confirm it
+router.post(
+    '/orders/:id/verify-otp',
+    sensitiveActionLimiter,
+    processRequestBody(VerifyOtpSchema.extend({ id: z.string().cuid() })), // Also validate param
+    async (req, res, next) => {
+        try {
+            const { id } = req.params;
+            const { code } = req.body;
+
+            const result = await verifyOrderOtp(id, code);
+
+            if (!result.success) {
+                return res.status(400).json({ message: result.message });
+            }
+
+            res.json({ message: result.message, order: result.order });
+        } catch (error) {
+            next(error);
         }
-
-        const result = await verifyOrderOtp(id, code);
-
-        if (!result.success) {
-            return res.status(400).json({ message: result.message });
-        }
-
-        res.json({ message: result.message, order: result.order });
-    } catch (error) {
-        next(error);
     }
+);
+
+
+// --- WhatsApp Deeplink ---
+// POST /api/whatsapp/deeplink -> Generate a wa.me link
+// This is a placeholder implementation.
+router.post('/whatsapp/deeplink', (req, res) => {
+    // In a real app, you would validate the body (cart items, etc.)
+    // and use the wa.ts utility to generate the link.
+    const mockLink = 'https://wa.me/212600000000?text=Hello!';
+    res.json({ link: mockLink });
 });
-
-// --- Other Public Routes ---
-
-// POST /api/whatsapp/deeplink
-// ... implementation ...
 
 export default router;

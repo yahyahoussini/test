@@ -3,6 +3,9 @@ import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Label } from '@/components/ui/Label'
 
 const orderSuccessSearchSchema = z.object({
   orderId: z.string(),
@@ -21,7 +24,7 @@ async function verifyOtp({ orderId, code }: { orderId: string, code: string }) {
     body: JSON.stringify({ code }),
   });
   if (!res.ok) {
-    const errorData = await res.json();
+    const errorData = await res.json().catch(() => ({ message: 'Failed to verify OTP'}));
     throw new Error(errorData.message || 'Failed to verify OTP');
   }
   return res.json();
@@ -41,13 +44,11 @@ function OrderSuccessPage() {
   const mutation = useMutation({
     mutationFn: (code: string) => verifyOtp({ orderId, code }),
     onSuccess: () => {
-      // On successful verification, maybe navigate to a final "thank you" page
-      // or just display a success message here.
-      alert("Order Confirmed! Thank you for your purchase.");
+      alert("Commande confirmée! Merci pour votre achat."); // Replace with toast
       navigate({ to: '/' });
     },
     onError: (error) => {
-      alert(`Error: ${error.message}`);
+      alert(`Erreur: ${error.message}`); // Replace with toast
     },
   });
 
@@ -56,31 +57,36 @@ function OrderSuccessPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-lg text-center">
-      <h1 className="text-3xl font-bold text-green-700 mb-4">{t('success_title')}</h1>
-      <p className="text-gray-600 mb-6">
-        Your order #{shortId} has been placed. Please verify your phone number to confirm it.
+    <div className="container mx-auto p-4 max-w-lg text-center py-16">
+      <h1 className="text-3xl font-bold text-primary mb-4">{t('success_title')}</h1>
+      <p className="text-gray-600 mb-8">
+        Votre commande <span className="font-bold">#{shortId}</span> a bien été enregistrée.
       </p>
 
-      <div className="bg-gray-50 p-6 rounded-lg shadow-sm">
+      <div className="bg-white border p-6 rounded-lg shadow-sm">
         <h2 className="text-lg font-semibold mb-3">{t('otp_prompt')}</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col items-center gap-4">
-          <input
-            {...register('code', { required: true, minLength: 6, maxLength: 6 })}
-            id="otp"
-            type="text"
-            maxLength={6}
-            className="w-48 text-center text-2xl tracking-[.2em] p-2 border rounded-md shadow-sm"
-            placeholder="------"
-          />
-          {errors.code && <p className="text-sm text-red-600">OTP must be 6 digits.</p>}
-          <button
+          <div className="w-full max-w-xs">
+            <Label htmlFor="otp" className="sr-only">OTP Code</Label>
+            <Input
+              {...register('code', { required: true, minLength: 6, maxLength: 6 })}
+              id="otp"
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              className="w-full text-center text-2xl tracking-[.3em] p-2"
+              placeholder="------"
+            />
+            {errors.code && <p className="text-sm text-red-600 mt-1">Le code doit faire 6 chiffres.</p>}
+          </div>
+          <Button
             type="submit"
             disabled={isSubmitting || mutation.isPending}
-            className="w-full bg-green-700 text-white py-3 rounded-lg hover:bg-green-800 disabled:bg-gray-400"
+            className="w-full max-w-xs"
+            size="lg"
           >
-            {isSubmitting || mutation.isPending ? t('loading') : "Verify & Confirm Order"}
-          </button>
+            {isSubmitting || mutation.isPending ? t('loading') : "Vérifier & Confirmer"}
+          </Button>
         </form>
       </div>
     </div>

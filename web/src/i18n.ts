@@ -1,6 +1,12 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { Locale } from 'shared';
+
+export const locales: Record<Locale, { title: string; native: string }> = {
+  'fr-MA': { title: 'French', native: 'Français' },
+  'ar-MA': { title: 'Arabic', native: 'العربية' },
+};
 
 const resources = {
   'ar-MA': {
@@ -19,6 +25,8 @@ const resources = {
       "checkout": "إتمام الطلب",
       "home": "الرئيسية",
       "loading": "جاري التحميل...",
+      "stock_zero": "نفذ المخزون",
+      "privacy_policy_acceptance": "أوافق على سياسة الخصوصية",
     },
   },
   'fr-MA': {
@@ -37,6 +45,8 @@ const resources = {
       "checkout": "Commander",
       "home": "Accueil",
       "loading": "Chargement...",
+      "stock_zero": "Stock épuisé",
+      "privacy_policy_acceptance": "J'accepte la politique de confidentialité",
     },
   },
 };
@@ -47,12 +57,10 @@ i18n
   .init({
     resources,
     fallbackLng: 'fr-MA',
-    supportedLngs: ['fr-MA', 'ar-MA'],
+    supportedLngs: Object.keys(locales),
 
     detection: {
-      // order and from where user language should be detected
-      order: ['path', 'cookie', 'htmlTag', 'localStorage', 'subdomain'],
-      // keys or params to lookup language from
+      order: ['path', 'cookie', 'localStorage', 'htmlTag'],
       lookupFromPathIndex: 0,
     },
 

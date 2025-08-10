@@ -1,31 +1,33 @@
 {
-  "name": "cod-ecommerce-mvp",
+  "name": "cod-ecommerce-mvp-morocco",
   "version": "1.0.0",
   "private": true,
-  "description": "A production-ready COD-only e-commerce MVP for Morocco.",
+  "description": "Production-Ready COD-Only E-Commerce MVP (Morocco · ar‑MA + fr‑MA)",
   "author": "Jules",
   "license": "MIT",
-  "packageManager": "pnpm@8.6.0",
+  "workspaces": [
+    "api",
+    "web",
+    "shared"
+  ],
   "scripts": {
-    "dev": "pnpm --parallel --stream dev",
-    "dev:api": "pnpm --filter api dev",
-    "dev:web": "pnpm --filter web dev",
-    "build": "pnpm --filter \"./**\" build",
-    "build:api": "pnpm --filter api build",
-    "build:web": "pnpm --filter web build",
-    "start": "pnpm --filter api start",
-    "lint": "pnpm --filter \"./**\" lint",
-    "test": "pnpm --filter api test && pnpm --filter web test",
-    "test:e2e": "pnpm --filter web test:e2e",
-    "db:migrate:dev": "pnpm --filter api migrate:dev",
-    "db:studio": "pnpm --filter api studio",
-    "seed": "pnpm --filter api seed",
-    "postinstall": "pnpm --filter \"./**\" install"
+    "dev": "npm run dev --workspace=api & npm run dev --workspace=web",
+    "dev:api": "npm run dev --workspace=api",
+    "dev:web": "npm run dev --workspace=web",
+    "build": "npm run build --workspaces --if-present",
+    "build:api": "npm run build --workspace=api",
+    "build:web": "npm run build --workspace=web",
+    "start:api": "npm start --workspace=api",
+    "seed": "npm run seed --workspace=api",
+    "migrate:dev": "npm run migrate:dev --workspace=api",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write .",
+    "test": "npm test --workspaces --if-present"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "eslint": "^8.57.0",
-    "prettier": "^3.2.5",
-    "typescript": "^5.3.3"
+    "concurrently": "8.2.2",
+    "eslint": "8.57.0",
+    "prettier": "3.2.5",
+    "typescript": "5.4.5"
   }
 }

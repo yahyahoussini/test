@@ -4,15 +4,17 @@ import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CreateOrderSchema, CreateOrderDto, OrderResponse } from 'shared'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Label } from '@/components/ui/Label'
 
 export const Route = createFileRoute('/checkout')({
   component: CheckoutPage,
 })
 
-// Mock city options
-const cityOptions = [
-  "Casablanca", "Rabat", "Marrakech", "Agadir", "Fes", "Tangier", "Other"
-];
+// In a real app, this would come from a global state (e.g., Zustand, Context)
+const MOCK_CART = [{ productId: 'clslm8b9d000108l376g5hfds', qty: 1 }];
+const MOCK_CITIES = ["Casablanca", "Rabat", "Marrakech", "Agadir", "Fes", "Tangier", "Autre"];
 
 async function postOrder(orderData: CreateOrderDto): Promise<OrderResponse> {
   const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/orders`, {
@@ -21,7 +23,7 @@ async function postOrder(orderData: CreateOrderDto): Promise<OrderResponse> {
     body: JSON.stringify(orderData),
   })
   if (!res.ok) {
-    const errorData = await res.json();
+    const errorData = await res.json().catch(() => ({ message: 'An unknown error occurred' }));
     throw new Error(errorData.message || 'Failed to place order');
   }
   return res.json()
@@ -31,11 +33,6 @@ function CheckoutPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  // TODO: Replace with actual cart state
-  const mockCart = {
-    items: [{ productId: 'clslm8b9d000108l376g5hfds', qty: 1 }],
-  };
-
   const {
     register,
     handleSubmit,
@@ -43,21 +40,19 @@ function CheckoutPage() {
   } = useForm<CreateOrderDto>({
     resolver: zodResolver(CreateOrderSchema),
     defaultValues: {
-      items: mockCart.items,
+      items: MOCK_CART,
       acceptPrivacy: false,
-      customer: { name: '', phone: '', city: 'Casablanca', address: '' }
+      customer: { name: '', phone: '', city: 'Casablanca', address: '', notes: '' }
     }
   });
 
   const mutation = useMutation({
     mutationFn: postOrder,
     onSuccess: (data) => {
-      // Navigate to order success page with order details
       navigate({ to: '/order-success', search: { orderId: data.id, shortId: data.shortId } });
     },
     onError: (error) => {
-      // TODO: Show a toast notification with the error
-      alert(`Error: ${error.message}`);
+      alert(`Erreur: ${error.message}`); // Replace with a proper toast notification
     }
   });
 
@@ -66,54 +61,52 @@ function CheckoutPage() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6">{t('checkout')}</h1>
+    <div className="container mx-auto p-4 max-w-2xl py-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">{t('checkout')}</h1>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">{t('form_name')}</label>
-          <input {...register('customer.name')} id="name" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-          {errors.customer?.name && <p className="mt-2 text-sm text-red-600">{errors.customer.name.message}</p>}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-1">
+          <Label htmlFor="name">{t('form_name')}</Label>
+          <Input {...register('customer.name')} id="name" />
+          {errors.customer?.name && <p className="text-sm text-red-600">{errors.customer.name.message}</p>}
         </div>
 
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">{t('form_phone')}</label>
-          <input {...register('customer.phone')} id="phone" placeholder="0612345678" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-          {errors.customer?.phone && <p className="mt-2 text-sm text-red-600">{errors.customer.phone.message}</p>}
+        <div className="space-y-1">
+          <Label htmlFor="phone">{t('form_phone')}</Label>
+          <Input {...register('customer.phone')} id="phone" placeholder="0612345678" />
+          {errors.customer?.phone && <p className="text-sm text-red-600">{errors.customer.phone.message}</p>}
         </div>
 
-        <div>
-          <label htmlFor="city" className="block text-sm font-medium text-gray-700">{t('form_city')}</label>
-          <select {...register('customer.city')} id="city" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-            {cityOptions.map(city => <option key={city} value={city}>{city}</option>)}
+        <div className="space-y-1">
+          <Label htmlFor="city">{t('form_city')}</Label>
+          <select {...register('customer.city')} id="city" className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+            {MOCK_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
           </select>
-          {errors.customer?.city && <p className="mt-2 text-sm text-red-600">{errors.customer.city.message}</p>}
+          {errors.customer?.city && <p className="text-sm text-red-600">{errors.customer.city.message}</p>}
         </div>
 
-        <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700">{t('form_address')}</label>
-          <textarea {...register('customer.address')} id="address" rows={3} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-          {errors.customer?.address && <p className="mt-2 text-sm text-red-600">{errors.customer.address.message}</p>}
+        <div className="space-y-1">
+          <Label htmlFor="address">{t('form_address')}</Label>
+          <Input {...register('customer.address')} id="address" />
+          {errors.customer?.address && <p className="text-sm text-red-600">{errors.customer.address.message}</p>}
         </div>
 
-        <div className="flex items-start">
-            <div className="flex h-5 items-center">
-                <input {...register('acceptPrivacy')} id="acceptPrivacy" type="checkbox" className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
-            </div>
-            <div className="ml-3 text-sm">
-                <label htmlFor="acceptPrivacy" className="font-medium text-gray-700">I accept the privacy policy</label>
-                {errors.acceptPrivacy && <p className="text-sm text-red-600">{errors.acceptPrivacy.message}</p>}
+        <div className="flex items-start gap-x-3 pt-2">
+            <input {...register('acceptPrivacy')} id="acceptPrivacy" type="checkbox" className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary mt-1" />
+            <div className="text-sm leading-6">
+              <Label htmlFor="acceptPrivacy" className="font-medium text-gray-700">{t('privacy_policy_acceptance')}</Label>
+              {errors.acceptPrivacy && <p className="text-sm text-red-600">{errors.acceptPrivacy.message}</p>}
             </div>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg text-center">
-          <p className="font-bold text-lg">{t('badge_cod')}</p>
-          <p className="text-sm text-gray-600">{t('cod_disclaimer')}</p>
+        <div className="bg-green-50 border border-green-200 p-4 rounded-lg text-center mt-6">
+          <p className="font-bold text-lg text-primary">{t('badge_cod')}</p>
+          <p className="text-sm text-green-800">{t('cod_disclaimer')}</p>
         </div>
 
-        <button type="submit" disabled={isSubmitting || mutation.isPending} className="w-full bg-green-700 text-white py-3 rounded-lg hover:bg-green-800 disabled:bg-gray-400">
+        <Button type="submit" disabled={isSubmitting || mutation.isPending} className="w-full" size="lg">
           {isSubmitting || mutation.isPending ? t('loading') : t('place_order')}
-        </button>
+        </Button>
       </form>
     </div>
   )
